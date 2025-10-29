@@ -1,6 +1,33 @@
 # FIXME this can't be called in sequence in general case,
 # because of unsynchronized `commandline -f` and `commandline -C`
 
+# Detect and validate the correct sed command
+function __fish_helix_check_sed
+    # Check if we've already set the sed command
+    if set -q __fish_helix_sed
+        return 0
+    end
+
+    # Detect OS and set appropriate sed command
+    if test (uname -s) = Darwin
+        # macOS - need GNU sed
+        if command -q gsed
+            set -g __fish_helix_sed gsed
+        else
+            echo "fish-helix requires GNU sed on macOS." >&2
+            echo "Install it with: brew install gnu-sed" >&2
+            echo "" >&2
+            echo "After installation, restart your shell or run:" >&2
+            echo "  set -g __fish_helix_sed gsed" >&2
+            return 1
+        end
+    else
+        # Linux/Unix - use standard sed
+        set -g __fish_helix_sed sed
+    end
+    return 0
+end
+
 function fish_helix_command
     argparse 'h/help' -- $argv
     or return 1
@@ -8,6 +35,10 @@ function fish_helix_command
         echo "Helper function to handle modal key bindings mostly outside of insert mode"
         return
     end
+
+    # Ensure sed is available
+    __fish_helix_check_sed
+    or return 1
 
     # TODO only single command allowed really yet,
     #     because `commandline -f` queues actions, while `commandline -C` is immediate
@@ -194,9 +225,9 @@ function __fish_helix_find_next_cr -a mode count skip
     set -l cursor (commandline -C)
     commandline | # Include endling newline intentionally
     # Skip until cursor:
-    sed -z 's/^.\{'(math $cursor + $skip)'\}\(.*\)$/\\1/' |
+    $__fish_helix_sed -z 's/^.\{'(math $cursor + $skip)'\}\(.*\)$/\\1/' |
     # Count characters up to the target newline:
-    sed -z 's/^\(\([^\\n]*\\n\)\{0,'$count'\}\).*/\\1/' |
+    $__fish_helix_sed -z 's/^\(\([^\\n]*\\n\)\{0,'$count'\}\).*/\\1/' |
     read -zl chars
 
     if test $mode = default -a -n "$chars"
@@ -210,12 +241,12 @@ end
 function __fish_helix_find_prev_cr -a mode count skip
     set -l cursor (commandline -C)
     commandline --cut-at-cursor |
-    sed -z 's/.\{'$skip'\}\n$//' |
+    $__fish_helix_sed -z 's/.\{'$skip'\}\n$//' |
     read -zl buffer
 
     echo -n $buffer |
     # Drop characters up to the target newline:
-    sed -z 's/\(\(\\n[^\\n]*\)\{0,'$count'\}\)$//' |
+    $__fish_helix_sed -z 's/\(\(\\n[^\\n]*\)\{0,'$count'\}\)$//' |
     read -zl chars
     set -l n_chars (math (string length -- "$buffer") - (string length -- "$chars"))
 
@@ -229,13 +260,13 @@ end
 
 function __fish_helix_goto_line_end
     # check if we are on an empty line first
-    commandline | sed -n (commandline -L)'!b;/^$/q;q5' && return
+    commandline | $__fish_helix_sed -n (commandline -L)'!b;/^$/q;q5' && return
     commandline -f end-of-line backward-char
 end
 
 function __fish_helix_goto_first_nonwhitespace
     # check if we are on whitespace line first
-    commandline | sed -n (commandline -L)'!b;/^\\s*$/q;q5' && return
+    commandline | $__fish_helix_sed -n (commandline -L)'!b;/^\\s*$/q;q5' && return
     commandline -f beginning-of-line forward-bigword backward-bigword
 end
 
@@ -342,7 +373,7 @@ function __fish_helix_delete_selection
     set start (commandline -B)
     set end (commandline -E)
     commandline |
-    sed -zE 's/^(.{'$start'})(.{0,'(math $end - $start)'})(.*)\\n$/\\1\\3/' |
+    $__fish_helix_sed -zE 's/^(.{'$start'})(.{0,'(math $end - $start)'})(.*)\\n$/\\1\\3/' |
     read -l result
 
     commandline "$result"
@@ -406,7 +437,7 @@ function __fish_helix_replace_selection -a replacement cmd_paste
     set start (commandline -B)
     set end (commandline -E)
     commandline |
-    sed -zE 's/^(.{'$start'})(.{0,'(math $end - $start)'})(.*)\\n$/\\1'"$(string escape --style=regex "$replacement")"'\\3/' |
+    $__fish_helix_sed -zE 's/^(.{'$start'})(.{0,'(math $end - $start)'})(.*)\\n$/\\1'"$(string escape --style=regex "$replacement")"'\\3/' |
     read -l result
 
     commandline "$result"
