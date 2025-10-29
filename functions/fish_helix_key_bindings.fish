@@ -147,13 +147,15 @@ function fish_helix_key_bindings --description 'helix-like key bindings for fish
         bind -s --preset -M $mode t\e ""
         bind -s --preset -M $mode f\e ""
         bind -s --preset -M $mode T\e ""
-        bind -s --preset -M $mode F\e ""
+        # FIXME: F\e fails in Fish 4.0 - "cannot parse key 'F\e'"
+        # bind -s --preset -M $mode F\e ""
 
         for enter in \r \n
             bind -s --preset -M $mode t$enter "fish_helix_command till_next_cr"
             bind -s --preset -M $mode f$enter "fish_helix_command find_next_cr"
             bind -s --preset -M $mode T$enter "fish_helix_command till_prev_cr"
-            bind -s --preset -M $mode F$enter "fish_helix_command find_prev_cr"
+            # FIXME: F\r and F\n fail in Fish 4.0 - "cannot parse key"
+            # bind -s --preset -M $mode F$enter "fish_helix_command find_prev_cr"
         end
 
         for key in gh \e\[H \eOH home
