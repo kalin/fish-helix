@@ -5,14 +5,44 @@ helix key bindings for fish
 
 # Installation
 
-Dependencies: **fish >= 4.0**, **GNU sed** (macOS), **perl**.
+**Dependencies:**
+- **fish >= 4.0**
+- **GNU sed** (see platform-specific instructions below)
+- **perl**
 
-1. Copy `functions` directory as `~/.config/fish/functions`.
-2. Run `fish_helix_key_bindings`.
+**Installing GNU sed:**
+- **macOS:** `brew install gnu-sed`
+- **Linux:** Usually pre-installed. If not:
+  - Debian/Ubuntu: `sudo apt-get install sed`
+  - Fedora/RHEL: `sudo dnf install sed`
+  - Arch: `sudo pacman -S sed`
+- **BSD:** `pkg install gsed` (FreeBSD) or `pkgin install gsed` (NetBSD)
 
-To undo, run `fish_default_key_bindings`.
+The functions auto-detect and use `gsed` on macOS/BSD and `sed` on Linux.
 
-**macOS users:** Install GNU sed with `brew install gnu-sed`. The functions will auto-detect and use `gsed` on macOS and `sed` on Linux.
+**Installation Steps:**
+
+1. Copy the function files to your fish functions directory:
+   ```bash
+   cp functions/*.fish ~/.config/fish/functions/
+   ```
+
+2. Activate helix key bindings (choose one):
+
+   **Option A - Try it out (current session only):**
+   ```fish
+   fish_helix_key_bindings
+   ```
+
+   **Option B - Make it permanent:**
+
+   Add this line to `~/.config/fish/config.fish`:
+   ```fish
+   fish_helix_key_bindings
+   ```
+   Then restart your shell or run `source ~/.config/fish/config.fish`
+
+**To undo:** Run `fish_default_key_bindings` (or remove the line from config.fish for permanent removal).
 
 ## Fish 4.0 Compatibility
 

@@ -9,20 +9,25 @@ function __fish_helix_check_sed
     end
 
     # Detect OS and set appropriate sed command
-    if test (uname -s) = Darwin
-        # macOS - need GNU sed
+    set -l os (uname -s)
+    if string match -qr '^(Darwin|FreeBSD|NetBSD|OpenBSD)' $os
+        # macOS/BSD - need GNU sed
         if command -q gsed
             set -g __fish_helix_sed gsed
         else
-            echo "fish-helix requires GNU sed on macOS." >&2
-            echo "Install it with: brew install gnu-sed" >&2
+            echo "fish-helix requires GNU sed on macOS/BSD." >&2
+            if test $os = Darwin
+                echo "Install it with: brew install gnu-sed" >&2
+            else
+                echo "Install it with: pkg install gsed (FreeBSD) or pkgin install gsed (NetBSD)" >&2
+            end
             echo "" >&2
             echo "After installation, restart your shell or run:" >&2
             echo "  set -g __fish_helix_sed gsed" >&2
             return 1
         end
     else
-        # Linux/Unix - use standard sed
+        # Linux - use standard sed (GNU sed is default)
         set -g __fish_helix_sed sed
     end
     return 0
