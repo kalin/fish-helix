@@ -5,14 +5,14 @@ helix key bindings for fish
 
 # Installation
 
-Dependencies: **fish >= 4.0**, GNU tools¹, perl.
+Dependencies: **fish >= 4.0**, **GNU sed** (macOS), **perl**.
 
 1. Copy `functions` directory as `~/.config/fish/functions`.
 2. Run `fish_helix_key_bindings`.
 
 To undo, run `fish_default_key_bindings`.
 
-¹ Should work with POSIX, but untested. Report any issues.
+**macOS users:** Install GNU sed with `brew install gnu-sed`. The functions will auto-detect and use `gsed` on macOS and `sed` on Linux.
 
 ## Fish 4.0 Compatibility
 
@@ -28,6 +28,14 @@ Due to a Fish 4.0 parser bug, the following key combinations are not available:
 - `F` + `Enter` (find previous to newline)
 
 All other helix key bindings work normally (~95% functionality).
+
+## Cross-Platform Compatibility
+
+The functions automatically detect the correct `sed` command:
+- **macOS**: Uses `gsed` (GNU sed) if available
+- **Linux**: Uses standard `sed`
+
+If `gsed` is not found on macOS, you'll receive a helpful error message with installation instructions. The detection happens lazily on first use and is cached for the session, so there's no performance overhead.
 
 # Tests
 
