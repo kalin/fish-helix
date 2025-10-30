@@ -18,21 +18,14 @@ tmux -f /dev/null -S "$temp_dir/tmux" new-session -dPF "#{session_name}" \
 
 # Wait for test result file - cross-platform
 if command -q inotifywait
-    # Linux
-    inotifywait -t 1 -e close_write "$temp_dir/result" >/dev/null 2>&1
-else if command -q fswatch
-    # macOS - use fswatch with gtimeout
-    if command -q gtimeout
-        gtimeout 1 fswatch -1 "$temp_dir/result" >/dev/null 2>&1
-    else if command -q timeout
-        timeout 1 fswatch -1 "$temp_dir/result" >/dev/null 2>&1
-    else
-        # No timeout command, just wait
-        sleep 1
-    end
+    # Linux - inotifywait can monitor before file exists
+    inotifywait -t 1 -e close_write "$temp_dir/result/result" >/dev/null 2>&1
 else
-    # Fallback: just wait
-    sleep 1
+    # macOS/BSD - poll for file existence (simpler and more reliable)
+    for i in (seq 1 10)
+        test -f "$temp_dir/result/result" && break
+        sleep 0.1
+    end
 end
 # Kill the tmux session using the same socket
 tmux -S "$temp_dir/tmux" kill-session -t "$tmux_session" 2>/dev/null
