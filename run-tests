@@ -25,10 +25,10 @@ for dir in $argv
         set temp_dir "$(mktemp -d)"
         if fish "$root/tests/_run.fish" "$test_file" "$temp_dir"
             if test -e "$temp_dir/broken"
-                # echo "Test $test_file is broken." >&2
+                echo "Test $test_file is broken." >&2
                 set broken (math $broken + 1)
             else
-                # echo "Test $test_file has succeeded." >&2
+                echo "Test $test_file has succeeded." >&2
                 set passed (math $passed + 1)
             end
         else

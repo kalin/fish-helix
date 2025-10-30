@@ -3,7 +3,7 @@
 # TODO error handling
 
 set temp_dir "$argv[1]"
-set tmux tmux -f /dev/null
+set tmux tmux -f /dev/null -S "$temp_dir/tmux"
 
 function validate
     touch "$temp_dir/result/result"
@@ -101,7 +101,8 @@ end
 set -g fish_key_bindings fish_helix_key_bindings
 bind --user --erase --all
 for mode in default visual insert
-    bind --user -M $mode -k f12 validate
-    bind --user -M $mode -k f9 check
+    # Fish 4.0+ uses escape sequences instead of -k flag
+    bind --user -M $mode \e\[24~ validate   # F12
+    bind --user -M $mode \e\[20~ check      # F9
 end
-bind --user -M insert -m default -k f11 ''
+bind --user -M insert -m default \e\[23~ '' # F11

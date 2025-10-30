@@ -5,6 +5,7 @@ set -l root "$(dirname "$(status filename)")"
 
 mkdir -p "$temp_dir/result"
 # TODO path to compiled fish executable
+# Start fish session with test setup, but DON'T send the finalize key yet
 tmux -f /dev/null -S "$temp_dir/tmux" new-session -dPF "#{session_name}" \
     fish --private -i -C "\
         source $root/../functions/fish_bind_count.fish; \
@@ -13,23 +14,31 @@ tmux -f /dev/null -S "$temp_dir/tmux" new-session -dPF "#{session_name}" \
         source $root/../functions/fish_helix_key_bindings.fish; \
         source $root/_init.fish $temp_dir; \
         source $test_file; \
-        source $root/_done.fish; \
     " | read -l tmux_session
 
-# Wait for test result file - cross-platform
-if command -q inotifywait
-    # Linux - inotifywait can monitor before file exists
-    inotifywait -t 1 -e close_write "$temp_dir/result/result" >/dev/null 2>&1
-else
-    # macOS/BSD - poll for file existence (simpler and more reliable)
-    for i in (seq 1 10)
-        test -f "$temp_dir/result/result" && break
-        sleep 0.1
-    end
+# Give fish time to fully initialize and become ready to receive keys
+# This needs to be generous enough for slower machines
+sleep 1.5
+
+# NOW send the F12 key to finalize the test (same as _done.fish did)
+tmux -f /dev/null -S "$temp_dir/tmux" send-keys -t "$tmux_session" F12
+
+# Wait for test result file - simple polling works on all platforms
+# Poll for up to 1 second (10 iterations × 0.1s)
+# Tests complete almost instantly once F12 is received
+for i in (seq 1 10)
+    test -f "$temp_dir/result/result" && break
+    sleep 0.1
 end
 # Kill the tmux session using the same socket
 tmux -S "$temp_dir/tmux" kill-session -t "$tmux_session" 2>/dev/null
-# Also kill any orphaned fish processes from this test
-pkill -P (pgrep -f "tmux.*$temp_dir") 2>/dev/null
 
+# Test MUST have completed (result file exists) to be valid
+# Otherwise we have a timeout/false-positive
+test -f "$temp_dir/result/result" || begin
+    echo "ERROR: Test timed out - result file not created" >&2
+    exit 1
+end
+
+# Now check if test passed or had expected failures
 test ! -e "$temp_dir/fixed" -a ! -e "$temp_dir/failure"

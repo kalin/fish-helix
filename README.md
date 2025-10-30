@@ -71,15 +71,13 @@ If `gsed` is not found on macOS, you'll receive a helpful error message with ins
 
 **Requirements:**
 - **tmux** - Session management for tests
-- **Linux:** `inotify-tools` - File watching (`apt-get install inotify-tools`)
-- **macOS:** `fswatch` - File watching (`brew install fswatch`)
 
 **Run tests:**
 ```bash
 ./run-tests
 ```
 
-The test suite automatically detects your platform and uses the appropriate file watching tool.
+The test suite uses simple polling for cross-platform compatibility (no external file-watching tools required).
 
 # Configuration
 
