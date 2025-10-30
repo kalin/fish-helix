@@ -295,6 +295,13 @@ function fish_helix_key_bindings --description 'helix-like key bindings for fish
     # After executing once, this will have defined functions listening for the variable.
     # Therefore it needs to be before setting fish_bind_mode.
     fish_vi_cursor
+
+    # Match Helix cursor shapes (bar/block/underline)
+    set -g fish_cursor_insert line        # Insert mode: bar (vertical line)
+    set -g fish_cursor_default block      # Normal mode: block
+    set -g fish_cursor_visual underscore  # Visual/Select mode: underline
+    set -g fish_cursor_replace_one underscore  # Replace mode: underline
+
     set -g fish_cursor_selection_mode inclusive
 
     set fish_bind_mode $init_mode
